@@ -1,0 +1,714 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dickson Xavier – Graph Resume</title>
+  <meta name="description" content="Interactive graph-style resume for Dickson Xavier: Senior Full-Stack Developer (Node.js, React, Azure, SQL)">
+  <!-- React & ReactDOM from CDN -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <!-- Babel so we can write JSX in the browser -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    :root {
+      --bg: #050816;
+      --panel: #0f172a;
+      --chip: #1e293b;
+      --accent: #38bdf8;
+      --accent-soft: rgba(56, 189, 248, 0.2);
+      --text-main: #e5e7eb;
+      --text-soft: #9ca3af;
+      --text-muted: #6b7280;
+      --border-subtle: #1f2933;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      background: radial-gradient(circle at top, #0b1120 0, #020617 60%, #000 100%);
+      color: var(--text-main);
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    .app-shell {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    header {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .title-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: baseline;
+    }
+
+    h1 {
+      font-size: 1.9rem;
+      letter-spacing: 0.04em;
+    }
+
+    .subtitle {
+      font-size: 0.95rem;
+      color: var(--text-soft);
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .badge {
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid var(--border-subtle);
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+      gap: 16px;
+      align-items: stretch;
+    }
+
+    @media (max-width: 900px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .panel {
+      border-radius: 16px;
+      background: radial-gradient(circle at top left, rgba(56,189,248,0.14), transparent 55%),
+                  radial-gradient(circle at bottom right, rgba(129,140,248,0.08), transparent 55%),
+                  rgba(15,23,42,0.96);
+      border: 1px solid rgba(148,163,184,0.15);
+      box-shadow:
+        0 18px 45px rgba(15,23,42,0.7),
+        0 0 0 1px rgba(15,23,42,0.9);
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .panel h2 {
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-soft);
+    }
+
+    .summary-text {
+      font-size: 0.88rem;
+      color: var(--text-soft);
+      line-height: 1.6;
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .pill {
+      font-size: 0.75rem;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(15,23,42,0.85);
+      border: 1px solid rgba(148,163,184,0.2);
+      color: var(--text-soft);
+      white-space: nowrap;
+    }
+
+    .graph-layout {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    @media (max-width: 1024px) {
+      .graph-layout {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 700px) {
+      .graph-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .cluster-column {
+      border-radius: 12px;
+      padding: 10px;
+      background: linear-gradient(to bottom, rgba(15,23,42,1), rgba(15,23,42,0.85));
+      border: 1px solid rgba(148,163,184,0.15);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-height: 140px;
+    }
+
+    .cluster-header {
+      font-size: 0.78rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .cluster-count {
+      font-size: 0.7rem;
+      color: var(--text-soft);
+      opacity: 0.9;
+    }
+
+    .node-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .node-chip {
+      border-radius: 999px;
+      padding: 6px 9px;
+      font-size: 0.78rem;
+      background: var(--chip);
+      color: var(--text-soft);
+      border: 1px solid transparent;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background 0.15s ease, border-color 0.15s ease, transform 0.08s ease;
+    }
+
+    .node-chip:hover {
+      background: #111827;
+      border-color: rgba(148,163,184,0.4);
+      transform: translateY(-1px);
+    }
+
+    .node-chip.active {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      color: #e0f2fe;
+    }
+
+    .node-name {
+      font-weight: 500;
+    }
+
+    .node-meta {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .node-tag {
+      font-size: 0.7rem;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: rgba(15,23,42,0.8);
+      border: 1px solid rgba(148,163,184,0.4);
+      margin-left: 6px;
+    }
+
+    .detail-panel {
+      border-radius: 16px;
+      background: radial-gradient(circle at top left, rgba(56,189,248,0.16), transparent 55%),
+                  rgba(15,23,42,0.98);
+      border: 1px solid rgba(148,163,184,0.2);
+      padding: 14px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-height: 230px;
+    }
+
+    .detail-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .detail-sub {
+      font-size: 0.8rem;
+      color: var(--text-soft);
+    }
+
+    .detail-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .detail-badge {
+      font-size: 0.7rem;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(15,23,42,1);
+      border: 1px solid rgba(148,163,184,0.35);
+      color: var(--text-soft);
+    }
+
+    .detail-section-title {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    .detail-list {
+      list-style: none;
+      font-size: 0.8rem;
+      color: var(--text-soft);
+      margin-top: 4px;
+    }
+
+    .detail-list li {
+      padding-left: 12px;
+      position: relative;
+      margin-bottom: 3px;
+    }
+
+    .detail-list li::before {
+      content: "•";
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+      font-size: 0.8rem;
+    }
+
+    .detail-footer {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .legend span::before {
+      content: "●";
+      margin-right: 4px;
+      color: var(--accent);
+      font-size: 0.6rem;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const graphData = {
+      nodes: [
+        { id: "dickson", label: "Dickson Xavier", type: "person" },
+        { id: "cluster_experience", label: "Experience", type: "cluster" },
+        { id: "cluster_skills", label: "Skills", type: "cluster" },
+        { id: "cluster_education", label: "Education", type: "cluster" },
+        { id: "cluster_projects", label: "Projects", type: "cluster" },
+        {
+          id: "tcs_telia",
+          label: "TCS – Telia (Sweden)",
+          type: "experience",
+          years: "2019 – Present",
+          role: "Senior Full-Stack Developer",
+        },
+        {
+          id: "tcs_digital_garage",
+          label: "TCS – Digital Garage",
+          type: "experience",
+          years: "2019",
+          role: "Solution Architect",
+        },
+        {
+          id: "cognizant",
+          label: "Cognizant",
+          type: "experience",
+          years: "2016 – 2019",
+          role: "Technical Lead / Senior Full-Stack Engineer",
+        },
+        {
+          id: "ars",
+          label: "ARS Traffic (NL)",
+          type: "experience",
+          years: "2013 – 2016",
+          role: "Senior Software Engineer",
+        },
+        {
+          id: "vanilla",
+          label: "Vanilla Networks",
+          type: "experience",
+          years: "2012 – 2013",
+          role: "Web Developer",
+        },
+        { id: "node", label: "Node.js / Express", type: "skill", cluster: "backend" },
+        { id: "react", label: "React", type: "skill", cluster: "frontend" },
+        { id: "vue", label: "Vue 3", type: "skill", cluster: "frontend" },
+        { id: "typescript", label: "TypeScript", type: "skill", cluster: "backend" },
+        { id: "dotnet", label: ".NET / ASP.NET MVC", type: "skill", cluster: "backend" },
+        { id: "sql", label: "MS SQL / PostgreSQL", type: "skill", cluster: "data" },
+        { id: "mongo", label: "MongoDB", type: "skill", cluster: "data" },
+        { id: "azure", label: "Azure PaaS", type: "skill", cluster: "cloud" },
+        { id: "azure_devops", label: "Azure DevOps CI/CD", type: "skill", cluster: "cloud" },
+        { id: "gcp", label: "GCP / Firebase / Cloud Run", type: "skill", cluster: "cloud" },
+        { id: "python", label: "Python", type: "skill", cluster: "backend" },
+        { id: "ml", label: "Mask R-CNN PoC", type: "skill", cluster: "ml" },
+        { id: "hadoop", label: "Hadoop / HBase", type: "skill", cluster: "data" },
+        {
+          id: "mtech",
+          label: "M.Tech – Software Systems (BITS Pilani)",
+          type: "education",
+        },
+        {
+          id: "btech",
+          label: "B.Tech – ECE (CUSAT)",
+          type: "education",
+        },
+        {
+          id: "proj_portal",
+          label: "Customer Portals / PWA",
+          type: "project",
+        },
+        {
+          id: "proj_insurance",
+          label: "Insurance Platforms",
+          type: "project",
+        },
+        {
+          id: "proj_traffic",
+          label: "Traffic Monitoring Systems",
+          type: "project",
+        },
+        {
+          id: "proj_ml_claims",
+          label: "Vehicle Damage ML PoC",
+          type: "project",
+        },
+      ],
+      links: [
+        { source: "dickson", target: "cluster_experience" },
+        { source: "dickson", target: "cluster_skills" },
+        { source: "dickson", target: "cluster_education" },
+        { source: "dickson", target: "cluster_projects" },
+        { source: "cluster_experience", target: "tcs_telia" },
+        { source: "cluster_experience", target: "tcs_digital_garage" },
+        { source: "cluster_experience", target: "cognizant" },
+        { source: "cluster_experience", target: "ars" },
+        { source: "cluster_experience", target: "vanilla" },
+        { source: "cluster_skills", target: "node" },
+        { source: "cluster_skills", target: "react" },
+        { source: "cluster_skills", target: "vue" },
+        { source: "cluster_skills", target: "typescript" },
+        { source: "cluster_skills", target: "dotnet" },
+        { source: "cluster_skills", target: "sql" },
+        { source: "cluster_skills", target: "mongo" },
+        { source: "cluster_skills", target: "azure" },
+        { source: "cluster_skills", target: "azure_devops" },
+        { source: "cluster_skills", target: "gcp" },
+        { source: "cluster_skills", target: "python" },
+        { source: "cluster_skills", target: "ml" },
+        { source: "cluster_skills", target: "hadoop" },
+        { source: "cluster_education", target: "mtech" },
+        { source: "cluster_education", target: "btech" },
+        { source: "cluster_projects", target: "proj_portal" },
+        { source: "cluster_projects", target: "proj_insurance" },
+        { source: "cluster_projects", target: "proj_traffic" },
+        { source: "cluster_projects", target: "proj_ml_claims" },
+        { source: "tcs_telia", target: "node" },
+        { source: "tcs_telia", target: "react" },
+        { source: "tcs_telia", target: "vue" },
+        { source: "tcs_telia", target: "typescript" },
+        { source: "tcs_telia", target: "azure" },
+        { source: "tcs_telia", target: "azure_devops" },
+        { source: "tcs_telia", target: "sql" },
+        { source: "tcs_telia", target: "mongo" },
+        { source: "tcs_digital_garage", target: "node" },
+        { source: "tcs_digital_garage", target: "react" },
+        { source: "tcs_digital_garage", target: "gcp" },
+        { source: "cognizant", target: "dotnet" },
+        { source: "cognizant", target: "sql" },
+        { source: "cognizant", target: "python" },
+        { source: "cognizant", target: "ml" },
+        { source: "ars", target: "dotnet" },
+        { source: "ars", target: "hadoop" },
+        { source: "ars", target: "sql" },
+        { source: "vanilla", target: "dotnet" },
+        { source: "vanilla", target: "python" },
+        { source: "vanilla", target: "sql" },
+        { source: "tcs_telia", target: "proj_portal" },
+        { source: "tcs_digital_garage", target: "proj_portal" },
+        { source: "cognizant", target: "proj_insurance" },
+        { source: "ars", target: "proj_traffic" },
+        { source: "cognizant", target: "proj_ml_claims" },
+      ],
+    };
+
+    const byId = {};
+    graphData.nodes.forEach((n) => (byId[n.id] = n));
+
+    const nodeDetails = {
+      dickson: {
+        title: "Senior Full-Stack Developer",
+        subtitle: "Node.js / React / Azure | 14+ years experience",
+        bullets: [
+          "Delivers stable, maintainable software for large enterprises in telecom, insurance, and transport.",
+          "Comfortable owning features end-to-end: design, implementation, testing and deployment.",
+          "Enjoys working in cross-functional teams with a pragmatic, calm approach.",
+        ],
+      },
+      tcs_telia: {
+        bullets: [
+          "Senior full-stack developer for Telia’s customer-facing platforms in Sweden.",
+          "Implemented Node.js + TypeScript services and React/Vue frontends.",
+          "Worked with Azure PaaS and Azure DevOps pipelines for deployments.",
+        ],
+      },
+      tcs_digital_garage: {
+        bullets: [
+          "Worked on cloud-native prototypes using Node.js, React and GCP/Azure.",
+          "Built portal-style UIs and experimented with modern deployment patterns.",
+        ],
+      },
+      cognizant: {
+        bullets: [
+          "Modernised insurance platforms built on ASP.NET MVC and SQL.",
+          "Implemented a Mask R-CNN PoC in Python for vehicle damage assessment.",
+        ],
+      },
+      ars: {
+        bullets: [
+          "Built real-time transport and tolling support systems using .NET and distributed data.",
+          "Migrated reporting pipelines to Hadoop/HBase for large-scale analytics.",
+        ],
+      },
+      vanilla: {
+        bullets: [
+          "Worked on web applications using .NET, PHP, Python and JavaScript.",
+          "Formed the foundation of later full-stack engineering experience.",
+        ],
+      },
+    };
+
+    function App() {
+      const [activeId, setActiveId] = React.useState("dickson");
+      const activeNode = byId[activeId] || byId.dickson;
+
+      const connectedIds = new Set();
+      graphData.links.forEach((link) => {
+        if (link.source === activeId) connectedIds.add(link.target);
+        if (link.target === activeId) connectedIds.add(link.source);
+      });
+
+      const relatedNodes = Array.from(connectedIds)
+        .map((id) => byId[id])
+        .filter(Boolean);
+
+      function renderClusterNodes(filterFn) {
+        return graphData.nodes
+          .filter(filterFn)
+          .map((node) => {
+            const isActive = node.id === activeId;
+            const isConnected = connectedIds.has(node.id);
+            let tag = "";
+            if (node.type === "experience") tag = node.years || "";
+            if (node.type === "skill") tag = node.cluster || "";
+            if (node.type === "education") tag = "";
+            if (node.type === "project") tag = "Project";
+
+            const classNames = [
+              "node-chip",
+              isActive ? "active" : "",
+              !isActive && isConnected ? "connected" : "",
+            ].join(" ");
+
+            return (
+              <button
+                key={node.id}
+                className={classNames}
+                onClick={() => setActiveId(node.id)}
+                aria-pressed={isActive}
+              >
+                <div>
+                  <div className="node-name">{node.label}</div>
+                  {node.type === "experience" && node.role && (
+                    <div className="node-meta">{node.role}</div>
+                  )}
+                </div>
+                {tag && <span className="node-tag">{tag}</span>}
+              </button>
+            );
+          });
+      }
+
+      return (
+        <div className="app-shell">
+          <header>
+            <div className="title-row">
+              <div>
+                <h1>DICKSON XAVIER</h1>
+                <div className="subtitle">
+                  Senior Full-Stack Developer – Node.js · React · Azure · SQL
+                </div>
+              </div>
+              <div className="meta">
+                <span className="badge">Solna, Stockholm</span>
+                <span className="badge">14+ years experience</span>
+                <span className="badge">Telecom · Insurance · Transport</span>
+              </div>
+            </div>
+          </header>
+
+          <main>
+            <section className="panel">
+              <h2>Graph Summary</h2>
+              <p className="summary-text">
+                This resume is structured as a graph: your profile at the center, surrounded by clusters of experience, skills, education and projects. Click any node on the right to explore how everything connects.
+              </p>
+              <div className="pill-row">
+                <span className="pill">Full-Stack Engineering</span>
+                <span className="pill">Node.js / React / TypeScript</span>
+                <span className="pill">Azure &amp; CI/CD</span>
+                <span className="pill">Enterprise Platforms</span>
+                <span className="pill">Telecom · Insurance · Transport</span>
+              </div>
+
+              <div className="detail-panel">
+                <div className="detail-title">{activeNode.label || "Dickson Xavier"}</div>
+                <div className="detail-sub">
+                  {activeNode.id === "dickson"
+                    ? "Central node – overall profile"
+                    : activeNode.type === "experience"
+                    ? `${activeNode.role || ""} · ${activeNode.years || ""}`
+                    : activeNode.type === "skill"
+                    ? "Skill node"
+                    : activeNode.type === "education"
+                    ? "Education node"
+                    : activeNode.type === "project"
+                    ? "Project node"
+                    : "Node"}
+                </div>
+
+                <div className="detail-badges">
+                  {activeNode.type === "experience" && <span className="detail-badge">Experience</span>}
+                  {activeNode.type === "skill" && <span className="detail-badge">Skill</span>}
+                  {activeNode.type === "education" && <span className="detail-badge">Education</span>}
+                  {activeNode.type === "project" && <span className="detail-badge">Project</span>}
+                  {activeNode.id === "dickson" && <span className="detail-badge">Profile</span>}
+                  {activeNode.cluster && (
+                    <span className="detail-badge">{activeNode.cluster.toUpperCase()}</span>
+                  )}
+                </div>
+
+                <div className="detail-section-title">
+                  {activeNode.id === "dickson" ? "Highlights" : "Details"}
+                </div>
+                <ul className="detail-list">
+                  {(nodeDetails[activeNode.id]?.bullets || nodeDetails.dickson?.bullets || []).map((b, idx) => (
+                    <li key={idx}>{b}</li>
+                  ))}
+                </ul>
+
+                <div className="detail-section-title">Connected Nodes</div>
+                <div className="detail-badges">
+                  {relatedNodes.length === 0 && <span className="detail-badge">No direct links</span>}
+                  {relatedNodes.slice(0, 10).map((n) => (
+                    <span
+                      key={n.id}
+                      className="detail-badge"
+                      onClick={() => setActiveId(n.id)}
+                      style={{ cursor: "pointer" }}
+                    >
+                      {n.label}
+                    </span>
+                  ))}
+                </div>
+
+                <div className="detail-footer">
+                  The structure follows a Neo4j-style graph idea: nodes (experience, skills, education, projects) and relationships connecting where and how each skill was used.
+                </div>
+              </div>
+
+              <div className="legend">
+                <span>Experience · Skills · Education · Projects are all connected</span>
+              </div>
+            </section>
+
+            <section className="panel">
+              <h2>Graph Clusters</h2>
+              <div className="graph-layout">
+                <div className="cluster-column">
+                  <div className="cluster-header">
+                    <span>Experience</span>
+                    <span className="cluster-count">Nodes: 5</span>
+                  </div>
+                  <div className="node-list">{renderClusterNodes((n) => n.type === "experience")}</div>
+                </div>
+
+                <div className="cluster-column">
+                  <div className="cluster-header">
+                    <span>Skills</span>
+                    <span className="cluster-count">Nodes: 13</span>
+                  </div>
+                  <div className="node-list">{renderClusterNodes((n) => n.type === "skill")}</div>
+                </div>
+
+                <div className="cluster-column">
+                  <div className="cluster-header">
+                    <span>Education</span>
+                    <span className="cluster-count">Nodes: 2</span>
+                  </div>
+                  <div className="node-list">{renderClusterNodes((n) => n.type === "education")}</div>
+                </div>
+
+                <div className="cluster-column">
+                  <div className="cluster-header">
+                    <span>Projects</span>
+                    <span className="cluster-count">Nodes: 4</span>
+                  </div>
+                  <div className="node-list">{renderClusterNodes((n) => n.type === "project")}</div>
+                </div>
+              </div>
+            </section>
+          </main>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(<App />);
+  </script>
+</body>
+</html>
